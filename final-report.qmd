@@ -352,11 +352,10 @@ ggplot(policy_by_year, aes(x = year, y = n)) +
   theme_bw() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
-
+\newpage
 @fig-ev-policy shows the number of global EV policies announced by year. This visualization helps connect EV adoption with policy activity. Years with more policy announcements may reflect increased government attention toward electric vehicle adoption, charging infrastructure, and emissions reduction goals.
 
-\newpage
-Overall, this section suggests that electric vehicle adoption should be understood alongside both charging infrastructure and policy activity. EV stock growth alone does not fully describe adoption, because infrastructure availability and policy support also shape how practical and sustainable EV growth can be over time.
+This section suggests that electric vehicle adoption should be understood alongside both charging infrastructure and policy activity. EV stock growth alone does not fully describe adoption, because infrastructure availability and policy support also shape how practical and sustainable EV growth can be over time.
 
 # Discussion
 
