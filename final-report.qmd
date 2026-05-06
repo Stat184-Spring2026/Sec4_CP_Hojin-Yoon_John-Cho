@@ -15,6 +15,10 @@ format:
     
 geometry: margin=1in
 
+bibliography: references.bib
+
+csl: styles/apa7.csl
+
 execute:
   warning: false
   message: false
@@ -206,7 +210,7 @@ ggplot() +
   theme_minimal()
 ```
 
-As shown in @fig-ev-sales, global electric vehicle sales increased over time. The position of the points rises as the years increase, showing growth in EV adoption. The slope becomes steeper in the later years, which suggests that EV adoption accelerated instead of increasing at a constant rate. This may be connected to lower battery costs, more charging infrastructure, stronger government policies, and greater consumer interest in electric vehicles.
+As shown in @fig-ev-sales, global electric vehicle sales increased over time. The position of the points rises as the years increase, showing growth in EV adoption. The slope becomes steeper in the later years, which suggests that EV adoption accelerated instead of increasing at a constant rate. This may be connected to lower battery costs, more charging infrastructure, stronger government policies, and greater consumer interest in electric vehicles. [@iea2025]
 
 \newpage
 # Charging Infrastructure and EV Policy Trends
@@ -320,7 +324,7 @@ ggplot(combined, aes(x = year, y = ev_per_station)) +
   theme_bw()
 ```
 \newpage
-@fig-ev-ratio shows how the number of EVs per charging station changed over time. This ratio is useful because EV adoption depends not only on how many electric vehicles are sold, but also on whether charging infrastructure expands enough to support them. If the ratio rises sharply, it may suggest that EV stock is growing faster than charging availability.
+@fig-ev-ratio shows how the number of EVs per charging station changed over time. This ratio is useful because EV adoption depends not only on how many electric vehicles are sold, but also on whether charging infrastructure expands enough to support them. If the ratio rises sharply, it may suggest that EV stock is growing faster than charging availability. [@iea2025]
 
 ```{r}
 #| label: fig-ev-policy
@@ -353,7 +357,7 @@ ggplot(policy_by_year, aes(x = year, y = n)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 \newpage
-@fig-ev-policy shows the number of global EV policies announced by year. This visualization helps connect EV adoption with policy activity. Years with more policy announcements may reflect increased government attention toward electric vehicle adoption, charging infrastructure, and emissions reduction goals.
+@fig-ev-policy shows the number of global EV policies announced by year. This visualization helps connect EV adoption with policy activity. Years with more policy announcements may reflect increased government attention toward electric vehicle adoption, charging infrastructure, and emissions reduction goals. [@iea2025policy]
 
 This section suggests that electric vehicle adoption should be understood alongside both charging infrastructure and policy activity. EV stock growth alone does not fully describe adoption, because infrastructure availability and policy support also shape how practical and sustainable EV growth can be over time.
 
@@ -372,12 +376,6 @@ Future analysis could explore differences between countries, compare BEV and PHE
 # Author Contributions
 
 Hojin Yoon led the global EV adoption section, including the EV sales and EV stock table and the EV sales visualization. John Cho led the charging infrastructure and EV policy section, including the EV stock per charging station table, the charging ratio visualization, and the policy visualization. Both authors contributed to writing, editing, code review, and final report organization.
-
-# References
-
-International Energy Agency. (2025). *Global EV Data Explorer*. IEA.
-
-International Energy Agency. (2025). *Global EV Policy Explorer*. IEA.
 
 # Code Appendix
 
