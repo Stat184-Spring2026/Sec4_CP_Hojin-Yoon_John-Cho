@@ -91,6 +91,28 @@ ggplot(combined, aes(x = year, y = ev_per_station)) +
   theme_bw()
 ```
 
+```{r}
+#| label: ev-policy-data
+#| echo: false
+
+policy_data %>%
+  rename(year = `Year announced`) %>%
+  filter(!is.na(year)) %>%
+  count(year) %>%
+  ggplot(aes(x = year, y = n)) +
+  geom_col(fill = "steelblue") +
+  geom_text(aes(label = n), vjust = -0.5) +
+  scale_x_continuous(breaks = seq(min(policy_data$`Year announced`, na.rm = TRUE), 
+                                  max(policy_data$`Year announced`, na.rm = TRUE), by = 1)) +
+  labs(
+    title = "Global EV Legislation by Year",
+    x = "Year",
+    y = "Number of Policies"
+  ) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
 \newpage
 ## Code Appendix
 
