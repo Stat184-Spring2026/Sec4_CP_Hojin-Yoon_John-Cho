@@ -1,88 +1,133 @@
----
-title: "Global Electric Vehicle Adoption"
-date: "05/06/2026"
-format: pdf
----
+## Charging Infrastructure and EV Policy Trends
+
+## Data Provenance
+
+The data used in this section comes from two files: `EVDataExplorer2025.xlsx - GEVO_EV_2025.csv` and `Global EV Policy Explorer - Sheet1.csv`. The EV data includes information about electric vehicle stock, charging points, region, category, mode, year, and unit. The policy data includes information about global electric vehicle policies and the year each policy was announced.
+
+For this section, I focused on global historical EV stock and EV charging point data. I also used the policy dataset to explore how the number of EV-related policies changed over time. Together, these datasets help connect electric vehicle adoption, charging infrastructure, and policy activity.
+
+## FAIR and CARE Principles
+
+The EV and policy datasets mostly follow the FAIR principles because they are structured, readable in R, and include variables that can be filtered, grouped, and reused for analysis. The datasets are accessible and reusable because they are stored in common file formats and include information such as year, region, parameter, and policy announcement year. However, some cleaning is still required because column names and variable meanings need to be interpreted carefully before analysis.
+
+The CARE principles are less directly involved because the datasets focus on global transportation and policy trends rather than individual or sensitive community-level data. However, the data can still support collective benefit by helping researchers and policymakers understand how infrastructure and policy development relate to electric vehicle adoption.
+
+## Methods and Paradigms
+
+This section follows an Exploratory Data Analysis paradigm because it investigates patterns in EV stock, charging stations, and policy activity over time before making formal conclusions. The goal is to understand what is happening in the data through summaries, visualizations, and comparisons.
+
+The coding workflow uses the Tidyverse paradigm because its pipe-based syntax makes the data cleaning, joining, summarizing, and visualization steps easier to read and reproduce.
+
+## Data Preparation
+
+For this analysis, I filtered the EV dataset to include only historical global records. I then separated EV charging points and EV stock into two smaller datasets, summarized each by year, and joined them together. After joining the datasets, I created a new variable called `ev_per_station`, which measures the number of electric vehicles per charging station.
 
 ```{r}
-#| echo: false
-#| message: false
-#| warning: false
+#| label: setup-john
+#| include: false
+
+# Primary author: John Cho
+# Reviewed by: Hojin Yoon
+# Style guide: tidyverse style guide
 
 library(tidyverse)
+library(readxl)
 library(knitr)
-# Load your datasets
-ev_data <- read_csv("data/EVDataExplorer2025.xlsx - GEVO_EV_2025.csv")
-policy_data <- read_csv("data/Global EV Policy Explorer - Sheet1.csv")
+library(scales)
 
-# Quick look
-colnames(ev_data)
-colnames(policy_data)
+# Import EV and policy datasets
+ev_data <- read_excel(
+  "data/EVDataExplorer2025.xlsx",
+  sheet = "GEVO_EV_2025"
+)
+policy_data <- read_excel("data/Global EV Policy Explorer.xlsx")
 
-unique(ev_data$parameter)
-unique(ev_data$mode)
+# Filter to historical global EV data
+global_ev_data <- ev_data |>
+  filter(
+    category == "Historical",
+    region_country == "World"
+  )
 
-
-ev_data <- filter(ev_data, category == "Historical")
-
-global_ev_data <- filter(ev_data, region_country =="World")
-
-#separating out the charging stations data
-charging_stations <- filter(global_ev_data, parameter=="EV charging points") %>%
-  group_by(region_country, category, parameter, mode, year, unit, `Aggregate group`) %>%
-  summarise(value = sum(value), .groups = "drop") %>% 
+# Create charging station dataset
+charging_stations <- global_ev_data |>
+  filter(parameter == "EV charging points") |>
+  group_by(region_country, category, parameter, mode, year, unit, `Aggregate group`) |>
+  summarise(value = sum(value, na.rm = TRUE), .groups = "drop") |>
   rename(charging_stations = value)
 
-
-ev_stock <- filter(global_ev_data, parameter=="EV stock") %>%
-  group_by(region_country, category, parameter, year, unit, `Aggregate group`) %>%
-  summarise(value = sum(value), .groups = "drop") %>%
+# Create EV stock dataset
+ev_stock <- global_ev_data |>
+  filter(parameter == "EV stock") |>
+  group_by(region_country, category, parameter, year, unit, `Aggregate group`) |>
+  summarise(value = sum(value, na.rm = TRUE), .groups = "drop") |>
   rename(total_stock = value)
 
-
-combined <- ev_stock %>%
-  select(-parameter, -unit) %>%
+# Join EV stock and charging station data
+combined <- ev_stock |>
+  select(-parameter, -unit) |>
   full_join(
-    charging_stations %>% select(-parameter, -unit, -mode),
+    charging_stations |> select(-parameter, -unit, -mode),
     by = c("region_country", "category", "year", "Aggregate group")
-  )
+  ) |>
+  select(year, total_stock, charging_stations) |>
+  mutate(ev_per_station = total_stock / charging_stations)
 
-combined <- combined %>%
-  select(year, total_stock, charging_stations) %>%
-  mutate(ev_per_station = total_stock/charging_stations)
+# Summarize number of policies announced by year
+policy_by_year <- policy_data |>
+  rename(year = `Year announced`) |>
+  filter(!is.na(year)) |>
+  count(year)
 ```
 
-
-\newpage
-## Data
-
-As shown in @ev-datatable, the combined dataset includes EV stock and charging station data over time. @fig-ev-ratio illustrates the ratio of EVs per charging station over time.
+## Results
 
 ```{r}
-#| label: ev-datatable
+#| label: tbl-ev-charging
+#| tbl-cap: "Global EV stock, charging stations, and EVs per charging station over time."
 #| echo: false
 
-combined %>%
-  kable(
-    caption = "EV Stock and Charging Stations Over Time",
-    col.names = c("year", "total_stock","charging_stations","ev_per_station"),
-    digits = 2
+# Primary author: John Cho
+# Reviewed by: Hojin Yoon
+
+# Format the combined dataset into a readable table
+combined |>
+  mutate(
+    total_stock = scales::comma(total_stock),
+    charging_stations = scales::comma(charging_stations),
+    ev_per_station = round(ev_per_station, 2)
+  ) |>
+  knitr::kable(
+    col.names = c("Year", "Total EV Stock", "Charging Stations", "EVs per Station"),
+    align = c("c", "r", "r", "r")
   )
 ```
+
+Table @tbl-ev-charging shows global EV stock, charging stations, and the number of EVs per charging station over time. The `ev_per_station` variable helps compare EV growth with infrastructure growth. A higher value means that there are more electric vehicles for each charging station, which may suggest greater pressure on charging infrastructure.
 
 ```{r}
 #| label: fig-ev-ratio
-#| fig-cap: "Ratio of EV Stock to Charging Stations Over Time"
-#| fig-alt: "A line graph showing the number of electric vehicles per charging station from 2010 onwards, with labeled data points at each year."
+#| fig-cap: "Ratio of EV stock to charging stations over time."
+#| fig-alt: "Line graph showing the number of electric vehicles per charging station over time, with points labeled by year."
 #| fig-width: 7
 #| fig-height: 4
 #| echo: false
 
+# Primary author: John Cho
+# Reviewed by: Hojin Yoon
+
+# Create line graph of EVs per charging station
 ggplot(combined, aes(x = year, y = ev_per_station)) +
   geom_line() +
   geom_point() +
-  geom_text(aes(label = round(ev_per_station, 1)), vjust = -1) +
-  scale_x_continuous(breaks = seq(min(combined$year), max(combined$year), by = 1)) +
+  geom_text(
+    aes(label = round(ev_per_station, 1)),
+    vjust = -1,
+    size = 3
+  ) +
+  scale_x_continuous(
+    breaks = seq(min(combined$year), max(combined$year), by = 1)
+  ) +
   labs(
     title = "EV Stock per Charging Station Over Time",
     x = "Year",
@@ -91,19 +136,30 @@ ggplot(combined, aes(x = year, y = ev_per_station)) +
   theme_bw()
 ```
 
+Figure @fig-ev-ratio shows how the number of EVs per charging station changed over time. This ratio is useful because EV adoption depends not only on how many electric vehicles are sold, but also on whether charging infrastructure expands enough to support them. If the ratio rises sharply, it may suggest that EV stock is growing faster than charging availability.
+
 ```{r}
-#| label: ev-policy-data
+#| label: fig-ev-policy
+#| fig-cap: "Number of global EV policies announced by year."
+#| fig-alt: "Bar chart showing the number of electric vehicle policies announced each year."
+#| fig-width: 7
+#| fig-height: 4
 #| echo: false
 
-policy_data %>%
-  rename(year = `Year announced`) %>%
-  filter(!is.na(year)) %>%
-  count(year) %>%
-  ggplot(aes(x = year, y = n)) +
-  geom_col(fill = "steelblue") +
-  geom_text(aes(label = n), vjust = -0.5) +
-  scale_x_continuous(breaks = seq(min(policy_data$`Year announced`, na.rm = TRUE), 
-                                  max(policy_data$`Year announced`, na.rm = TRUE), by = 1)) +
+# Primary author: John Cho
+# Reviewed by: Hojin Yoon
+
+# Create bar chart of EV policy announcements by year
+ggplot(policy_by_year, aes(x = year, y = n)) +
+  geom_col() +
+  geom_text(
+    aes(label = n),
+    vjust = -0.5,
+    size = 3
+  ) +
+  scale_x_continuous(
+    breaks = seq(min(policy_by_year$year), max(policy_by_year$year), by = 1)
+  ) +
   labs(
     title = "Global EV Legislation by Year",
     x = "Year",
@@ -113,10 +169,6 @@ policy_data %>%
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-\newpage
-## Code Appendix
+Figure @fig-ev-policy shows the number of global EV policies announced by year. This visualization helps connect EV adoption with policy activity. Years with more policy announcements may reflect increased government attention toward electric vehicle adoption, charging infrastructure, and emissions reduction goals.
 
-```{r ref.label = knitr::all_labels()}
-#| echo: true
-#| eval: false
-```
+Overall, this section suggests that electric vehicle adoption should be understood alongside both charging infrastructure and policy activity. EV stock growth alone does not fully describe adoption, because infrastructure availability and policy support also shape how practical and sustainable EV growth can be over time.
