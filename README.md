@@ -8,7 +8,7 @@ We look at data from the early 2010s to 2025 to see how trends have changed in E
 
 ### Interesting Insight (Optional)
 
-![EV Stock vs Policies](images/your-plot.jpeg)
+![EV Stock vs Policies](/Electric Vehicle vs. Charging Station Graph.jpeg)
 The graph shows how the ratio of total number of Electric Vehicles to charging stations changes over this period of 14 years. We can clearly see when electric vehicles became wildly popular around 2012-2014 as the vehicle/charger ratio shoots up really high. Observing the rest of the graph we see how investment is made in charger infrastructure, as the ratio steadily decreases. 
 
 ## Data Sources and Acknowledgements
