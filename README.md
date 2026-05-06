@@ -6,6 +6,12 @@ This project analyzes global electric vehicle adoption trends using exploratory 
 
 We look at data from the early 2010s to 2025 to see how trends have changed in EV adoption. The main metrics we compared were Electric vehicle sales per year, electric vehicle stock/public charging station, and electric vehicle legislation per year. The goal is to see how trends are shifting for consumers in the global automotive industry since the growth of the electric vehicle market.
 
+## Methods and Paradigms
+
+This project follows an Exploratory Data Analysis (EDA) paradigm because the goal is to investigate trends and relationships in electric vehicle adoption data before making formal conclusions. 
+
+The coding workflow uses the Tidyverse paradigm in R because its pipe-based syntax improves readability, organization, and reproducibility during data cleaning, transformation, and visualization.
+
 ### Interesting Insight
 
 ![EV Stock vs Policies](figures/ev-stock-vs-chargin-stations.jpeg)
@@ -18,12 +24,6 @@ Our primary datasets come from the International Energy Agency (IEA) Global EV D
 The IEA is an intergovernmental organization focused on energy policy and sustainability research. Their publicly available datasets support transparency and reproducibility in EV-related research.
 
 We also acknowledge the use of the Tidyverse ecosystem in R for data wrangling and visualization.
-
-## Methods and Paradigms
-
-This project follows an Exploratory Data Analysis (EDA) paradigm because the goal is to investigate trends and relationships in electric vehicle adoption data before making formal conclusions. 
-
-The coding workflow uses the Tidyverse paradigm in R because its pipe-based syntax improves readability, organization, and reproducibility during data cleaning, transformation, and visualization.
 
 ## Reproducibility
 
@@ -41,10 +41,6 @@ To reproduce the report:
 2. Open the `.Rproj` file in RStudio
 3. Render `final-report.qmd`
 
-## Current Plan
-
-We intend to use this data to explore current trends and learn about what is going on in electric vehicle usage around the world.
-
 ## Repo Structure
 
 ```text
@@ -59,6 +55,10 @@ project/
 └── README.md            # Project overview and documentation
 ```
 
+## Current Plan
+
+We intend to use this data to explore current trends and learn about what is going on in electric vehicle usage around the world.
+
 ## Author Contributions
 
 Hojin Yoon focused on EV adoption trends, including EV sales and EV stock analysis.
@@ -67,7 +67,9 @@ John Cho focused on charging infrastructure and EV-related policy trends.
 
 Both authors contributed to writing, editing, reviewing code, and organizing the final report.
 
-If you have any questions, contact Hojin Yoon af hfy5167@psu.edu or John Cho at jyc5937@psu.edu.
+If you have any questions, contact:
+- Hojin Yoon at hfy5167@psu.edu
+- John Cho at jyc5937@psu.edu.
 
 ## Generative AI Usage
 
