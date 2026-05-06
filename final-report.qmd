@@ -15,7 +15,7 @@ format:
     
 geometry: margin=1in
 
-bibliography: references.bib
+bibliography: appendix/references.bib
 
 csl: styles/apa7.csl
 
