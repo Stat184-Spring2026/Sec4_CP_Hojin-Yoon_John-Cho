@@ -1,0 +1,589 @@
+---
+title: "Global Electric Vehicle Adoption"
+author:
+  - Hojin Yoon
+  - John Cho
+date: "05/06/2026"
+
+format:
+  pdf:
+    toc: true
+    toc-depth: 2
+    number-sections: true
+    toc-own-page: true
+    classoption: titlepage
+    
+geometry: margin=1in
+
+execute:
+  warning: false
+  message: false
+---
+\newpage
+# Introduction
+
+Electric vehicles are becoming an increasingly important part of the global transportation system. This project explores global electric vehicle adoption through an Exploratory Data Analysis approach, focusing on EV sales, EV stock, charging infrastructure, and policy activity over time.
+
+The main goal of this report is to understand how electric vehicle adoption has changed globally and how this growth relates to charging availability and EV-related legislation. Rather than making formal predictions, this project investigates patterns, trends, and relationships in the data to better understand what is happening in the global EV transition.
+
+# Research Questions
+
+This project is guided by the following research questions:
+
+1. How have global EV sales and EV stock changed over time?
+2. How has the relationship between EV stock and charging stations changed over time?
+3. How has global EV-related policy activity changed over time?
+4. What do these patterns suggest about the broader development of electric vehicle adoption?
+
+# Methods and Paradigms
+
+This project follows an Exploratory Data Analysis paradigm because the goal is to investigate broad patterns, trends, and relationships in the data before making formal conclusions. The analysis focuses on describing what is happening in the data through tables, visualizations, and narrative interpretation.
+
+The coding workflow uses the Tidyverse paradigm in R. This approach was chosen because Tidyverse functions support readable, organized, and reproducible data wrangling and visualization. The pipe-based workflow makes each step of the analysis easier to follow, review, and reproduce.
+
+# Data Provenance
+
+The data used in this project comes from the International Energy Agency Global EV Data Explorer and a global EV policy dataset. The EV dataset includes information about electric vehicle sales, EV stock, charging points, powertrain type, region, transportation mode, category, year, and value. The policy dataset includes information about EV-related policy announcements over time.
+
+For this project, the analysis focuses on global historical data for cars. The EV sales and EV stock variables were used to understand adoption growth, while charging station and policy variables were used to explore infrastructure and policy support.
+
+# FAIR and CARE Principles
+
+The datasets mostly follow the FAIR principles because they are findable, accessible, structured, and reusable. The data files can be imported into R and analyzed using reproducible code. However, the datasets still require careful interpretation because some column names and categories must be filtered correctly before analysis.
+
+The CARE principles are less directly involved because the datasets describe global transportation and policy trends rather than individual-level or sensitive community-level information. However, the project still supports collective benefit by helping readers understand electric vehicle adoption, infrastructure needs, and policy development.
+
+# Global EV Adoption Trends
+
+## Data Preparation
+
+For this part of the project, the data was filtered to focus on global historical electric car data. Battery electric vehicles and plug-in hybrid electric vehicles were included, and the data was grouped by year and parameter. This made it possible to compare yearly EV sales and total EV stock over time.
+
+```{r}
+#| label: setup-hojin
+#| include: false
+
+# Primary author: Hojin Yoon
+# Reviewed by: John Cho
+# Style guide: tidyverse style guide
+
+library(tidyverse)
+library(readxl)
+library(knitr)
+library(scales)
+
+# Import EV dataset
+ev_data <- read_excel(
+  "data/EVDataExplorer2025.xlsx",
+  sheet = "GEVO_EV_2025"
+)
+
+# Filter to global historical EV data for cars
+person1_data <- ev_data |>
+  filter(
+    region_country == "World",
+    category == "Historical",
+    mode == "Cars",
+    parameter %in% c("EV sales", "EV stock"),
+    powertrain %in% c("BEV", "PHEV")
+  ) |>
+  # Aggregate yearly EV sales and EV stock values
+  group_by(year, parameter) |>
+  summarize(value = sum(value, na.rm = TRUE), .groups = "drop")
+
+# Reshape the data into a table format
+person1_table <- person1_data |>
+  pivot_wider(
+    names_from = parameter,
+    values_from = value
+  ) |>
+  arrange(year) |>
+  rename(
+    Year = year,
+    `EV Sales` = `EV sales`,
+    `EV Stock` = `EV stock`
+  )
+```
+
+## Results
+
+```{r}
+#| label: tbl-ev-adoption
+#| tbl-cap: "Summary of global EV sales and EV stock for cars over time."
+#| echo: false
+
+# Primary author: Hojin Yoon
+# Reviewed by: John Cho
+
+# Format EV sales and stock values with commas for readability
+person1_table |>
+  mutate(
+    `EV Sales` = scales::comma(`EV Sales`),
+    `EV Stock` = scales::comma(`EV Stock`)
+  ) |>
+  knitr::kable(
+    align = c("c", "r", "r")
+  )
+```
+
+@tbl-ev-adoption summarizes global EV sales and EV stock for cars over time. EV sales represent the number of new electric cars sold each year, while EV stock represents the total number of electric cars on the road. The table shows that EV adoption increased over time, especially in later years when both yearly sales and total stock became much larger.
+
+```{r}
+#| label: fig-ev-sales
+#| fig-cap: "Global electric vehicle sales for cars over time."
+#| fig-alt: "Line graph showing global electric vehicle sales by year. The line rises over time, with especially faster growth in the later years, showing that EV adoption increased rapidly."
+#| echo: false
+
+# Primary author: Hojin Yoon
+# Reviewed by: John Cho
+
+# Create historical EV sales dataset
+ev_sales_actual <- ev_data |>
+  filter(
+    region_country == "World",
+    category == "Historical",
+    mode == "Cars",
+    parameter == "EV sales",
+    powertrain %in% c("BEV", "PHEV")
+  ) |>
+  group_by(year) |>
+  summarize(value = sum(value, na.rm = TRUE), .groups = "drop")
+
+# Create projected EV sales dataset
+ev_sales_projection <- ev_data |>
+  filter(
+    region_country == "World",
+    category != "Historical",
+    mode == "Cars",
+    parameter == "EV sales",
+    powertrain %in% c("BEV", "PHEV")
+  ) |>
+  group_by(year) |>
+  summarize(value = sum(value, na.rm = TRUE), .groups = "drop") |>
+  filter(year > max(ev_sales_actual$year)) |>
+  slice_min(year, n = 1)
+
+# Connect the final historical value to the first projected value
+projection_line <- bind_rows(
+  ev_sales_actual |> filter(year == max(year)),
+  ev_sales_projection
+)
+
+# Create EV sales visualization
+ggplot() +
+  geom_line(
+    data = ev_sales_actual,
+    aes(x = year, y = value),
+    linewidth = 1
+  ) +
+  geom_point(
+    data = ev_sales_actual,
+    aes(x = year, y = value),
+    size = 2
+  ) +
+  geom_line(
+    data = projection_line,
+    aes(x = year, y = value),
+    color = "red",
+    linewidth = 1,
+    linetype = "dashed"
+  ) +
+  geom_point(
+    data = ev_sales_projection,
+    aes(x = year, y = value),
+    color = "red",
+    size = 3
+  ) +
+  labs(
+    title = "Global Electric Vehicle Sales Over Time",
+    x = "Year",
+    y = "EV sales (vehicles)"
+  ) +
+  scale_x_continuous(
+    breaks = seq(min(ev_sales_actual$year), 2025, by = 5)
+  ) +
+  scale_y_continuous(labels = comma) +
+  theme_minimal()
+```
+
+As shown in @fig-ev-sales, global electric vehicle sales increased over time. The position of the points rises as the years increase, showing growth in EV adoption. The slope becomes steeper in the later years, which suggests that EV adoption accelerated instead of increasing at a constant rate. This may be connected to lower battery costs, more charging infrastructure, stronger government policies, and greater consumer interest in electric vehicles.
+
+\newpage
+# Charging Infrastructure and EV Policy Trends
+
+## Data Preparation
+
+For this analysis, the EV dataset was filtered to include only historical global records. EV charging points and EV stock were separated into two smaller datasets, summarized by year, and joined together. After joining the datasets, a new variable called `ev_per_station` was created to measure the number of electric vehicles per charging station.
+
+```{r}
+#| label: setup-john
+#| include: false
+
+# Primary author: John Cho
+# Reviewed by: Hojin Yoon
+# Style guide: tidyverse style guide
+
+# Import policy dataset
+policy_data <- read_excel("data/Global EV Policy Explorer.xlsx")
+
+# Filter to historical global EV data
+global_ev_data <- ev_data |>
+  filter(
+    category == "Historical",
+    region_country == "World"
+  )
+
+# Create charging station dataset
+charging_stations <- global_ev_data |>
+  filter(parameter == "EV charging points") |>
+  group_by(region_country, category, parameter, mode, year, unit, `Aggregate group`) |>
+  summarise(value = sum(value, na.rm = TRUE), .groups = "drop") |>
+  rename(charging_stations = value)
+
+# Create EV stock dataset
+ev_stock <- global_ev_data |>
+  filter(parameter == "EV stock") |>
+  group_by(region_country, category, parameter, year, unit, `Aggregate group`) |>
+  summarise(value = sum(value, na.rm = TRUE), .groups = "drop") |>
+  rename(total_stock = value)
+
+# Join EV stock and charging station data
+combined <- ev_stock |>
+  select(-parameter, -unit) |>
+  full_join(
+    charging_stations |> select(-parameter, -unit, -mode),
+    by = c("region_country", "category", "year", "Aggregate group")
+  ) |>
+  select(year, total_stock, charging_stations) |>
+  mutate(ev_per_station = total_stock / charging_stations)
+
+# Summarize number of policies announced by year
+policy_by_year <- policy_data |>
+  rename(year = `Year announced`) |>
+  filter(!is.na(year)) |>
+  count(year)
+```
+
+## Results
+
+```{r}
+#| label: tbl-ev-charging
+#| tbl-cap: "Global EV stock, charging stations, and EVs per charging station over time."
+#| echo: false
+
+# Primary author: John Cho
+# Reviewed by: Hojin Yoon
+
+# Format the combined dataset into a readable table
+combined |>
+  mutate(
+    total_stock = scales::comma(total_stock),
+    charging_stations = scales::comma(charging_stations),
+    ev_per_station = round(ev_per_station, 2)
+  ) |>
+  knitr::kable(
+    col.names = c("Year", "Total EV Stock", "Charging Stations", "EVs per Station"),
+    align = c("c", "r", "r", "r")
+  )
+```
+
+@tbl-ev-charging shows global EV stock, charging stations, and the number of EVs per charging station over time. The `ev_per_station` variable helps compare EV growth with infrastructure growth. A higher value means that there are more electric vehicles for each charging station, which may suggest greater pressure on charging infrastructure.
+
+\newpage
+```{r}
+#| label: fig-ev-ratio
+#| fig-cap: "Ratio of EV stock to charging stations over time."
+#| fig-alt: "Line graph showing the number of electric vehicles per charging station over time, with points labeled by year."
+#| fig-width: 7
+#| fig-height: 4
+#| echo: false
+
+# Primary author: John Cho
+# Reviewed by: Hojin Yoon
+
+# Create line graph of EVs per charging station
+ggplot(combined, aes(x = year, y = ev_per_station)) +
+  geom_line() +
+  geom_point() +
+  geom_text(
+    aes(label = round(ev_per_station, 1)),
+    vjust = -1,
+    size = 3
+  ) +
+  scale_x_continuous(
+    breaks = seq(min(combined$year), max(combined$year), by = 1)
+  ) +
+  labs(
+    title = "EV Stock per Charging Station Over Time",
+    x = "Year",
+    y = "EVs per Charging Station"
+  ) +
+  theme_bw()
+```
+
+@fig-ev-ratio shows how the number of EVs per charging station changed over time. This ratio is useful because EV adoption depends not only on how many electric vehicles are sold, but also on whether charging infrastructure expands enough to support them. If the ratio rises sharply, it may suggest that EV stock is growing faster than charging availability.
+
+\newpage
+```{r}
+#| label: fig-ev-policy
+#| fig-cap: "Number of global EV policies announced by year."
+#| fig-alt: "Bar chart showing the number of electric vehicle policies announced each year."
+#| fig-width: 7
+#| fig-height: 4
+#| echo: false
+
+# Primary author: John Cho
+# Reviewed by: Hojin Yoon
+
+# Create bar chart of EV policy announcements by year
+ggplot(policy_by_year, aes(x = year, y = n)) +
+  geom_col() +
+  geom_text(
+    aes(label = n),
+    vjust = -0.5,
+    size = 3
+  ) +
+  scale_x_continuous(
+    breaks = seq(min(policy_by_year$year), max(policy_by_year$year), by = 1)
+  ) +
+  labs(
+    title = "Global EV Legislation by Year",
+    x = "Year",
+    y = "Number of Policies"
+  ) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+@fig-ev-policy shows the number of global EV policies announced by year. This visualization helps connect EV adoption with policy activity. Years with more policy announcements may reflect increased government attention toward electric vehicle adoption, charging infrastructure, and emissions reduction goals.
+
+This section suggests that electric vehicle adoption should be understood alongside both charging infrastructure and policy activity. EV stock growth alone does not fully describe adoption, because infrastructure availability and policy support also shape how practical and sustainable EV growth can be over time.
+
+# Discussion
+
+Across both sections, the data suggests that global EV adoption has grown strongly over time. EV sales show yearly growth, while EV stock shows the long-term buildup of electric vehicles on the road. The infrastructure analysis adds another layer by showing that adoption should not only be measured by the number of EVs, but also by whether charging infrastructure is expanding enough to support them.
+
+The policy analysis suggests that government attention and legislation may be part of the broader EV adoption story. Since this is an exploratory project, these findings should be understood as patterns that raise further questions rather than final causal conclusions.
+
+# Conclusion
+
+Overall, this project shows that electric vehicles are becoming a much larger part of global transportation. Global EV sales and stock have increased over time, and the relationship between EV stock and charging infrastructure highlights the importance of supporting adoption with practical infrastructure. Policy activity also provides useful context for understanding how governments may be responding to and encouraging the EV transition.
+
+Future analysis could explore differences between countries, compare BEV and PHEV adoption separately, or examine whether policy announcements are followed by measurable changes in EV sales or infrastructure growth.
+
+# Author Contributions
+
+Hojin Yoon led the global EV adoption section, including the EV sales and EV stock table and the EV sales visualization. John Cho led the charging infrastructure and EV policy section, including the EV stock per charging station table, the charging ratio visualization, and the policy visualization. Both authors contributed to writing, editing, code review, and final report organization.
+
+# References
+
+International Energy Agency. (2025). *Global EV Data Explorer*. IEA.
+
+International Energy Agency. (2025). *Global EV Policy Explorer*. IEA.
+
+# Code Appendix
+
+```{r}
+#| echo: true
+#| eval: false
+
+# Primary author: Hojin Yoon
+# Reviewed by: John Cho
+# Style guide: tidyverse style guide
+
+library(tidyverse)
+library(readxl)
+library(knitr)
+library(scales)
+
+ev_data <- read_excel(
+  "data/EVDataExplorer2025.xlsx",
+  sheet = "GEVO_EV_2025"
+)
+
+person1_data <- ev_data |>
+  filter(
+    region_country == "World",
+    category == "Historical",
+    mode == "Cars",
+    parameter %in% c("EV sales", "EV stock"),
+    powertrain %in% c("BEV", "PHEV")
+  ) |>
+  group_by(year, parameter) |>
+  summarize(value = sum(value, na.rm = TRUE), .groups = "drop")
+
+person1_table <- person1_data |>
+  pivot_wider(
+    names_from = parameter,
+    values_from = value
+  ) |>
+  arrange(year) |>
+  rename(
+    Year = year,
+    `EV Sales` = `EV sales`,
+    `EV Stock` = `EV stock`
+  )
+
+person1_table |>
+  mutate(
+    `EV Sales` = scales::comma(`EV Sales`),
+    `EV Stock` = scales::comma(`EV Stock`)
+  ) |>
+  knitr::kable(
+    align = c("c", "r", "r")
+  )
+
+ev_sales_actual <- ev_data |>
+  filter(
+    region_country == "World",
+    category == "Historical",
+    mode == "Cars",
+    parameter == "EV sales",
+    powertrain %in% c("BEV", "PHEV")
+  ) |>
+  group_by(year) |>
+  summarize(value = sum(value, na.rm = TRUE), .groups = "drop")
+
+ev_sales_projection <- ev_data |>
+  filter(
+    region_country == "World",
+    category != "Historical",
+    mode == "Cars",
+    parameter == "EV sales",
+    powertrain %in% c("BEV", "PHEV")
+  ) |>
+  group_by(year) |>
+  summarize(value = sum(value, na.rm = TRUE), .groups = "drop") |>
+  filter(year > max(ev_sales_actual$year)) |>
+  slice_min(year, n = 1)
+
+projection_line <- bind_rows(
+  ev_sales_actual |> filter(year == max(year)),
+  ev_sales_projection
+)
+
+ggplot() +
+  geom_line(
+    data = ev_sales_actual,
+    aes(x = year, y = value),
+    linewidth = 1
+  ) +
+  geom_point(
+    data = ev_sales_actual,
+    aes(x = year, y = value),
+    size = 2
+  ) +
+  geom_line(
+    data = projection_line,
+    aes(x = year, y = value),
+    color = "red",
+    linewidth = 1,
+    linetype = "dashed"
+  ) +
+  geom_point(
+    data = ev_sales_projection,
+    aes(x = year, y = value),
+    color = "red",
+    size = 3
+  ) +
+  labs(
+    title = "Global Electric Vehicle Sales Over Time",
+    x = "Year",
+    y = "EV sales (vehicles)"
+  ) +
+  scale_x_continuous(
+    breaks = seq(min(ev_sales_actual$year), 2025, by = 5)
+  ) +
+  scale_y_continuous(labels = comma) +
+  theme_minimal()
+```
+
+```{r}
+#| echo: true
+#| eval: false
+
+# Primary author: John Cho
+# Reviewed by: Hojin Yoon
+# Style guide: tidyverse style guide
+
+policy_data <- read_excel("data/Global EV Policy Explorer.xlsx")
+
+global_ev_data <- ev_data |>
+  filter(
+    category == "Historical",
+    region_country == "World"
+  )
+
+charging_stations <- global_ev_data |>
+  filter(parameter == "EV charging points") |>
+  group_by(region_country, category, parameter, mode, year, unit, `Aggregate group`) |>
+  summarise(value = sum(value, na.rm = TRUE), .groups = "drop") |>
+  rename(charging_stations = value)
+
+ev_stock <- global_ev_data |>
+  filter(parameter == "EV stock") |>
+  group_by(region_country, category, parameter, year, unit, `Aggregate group`) |>
+  summarise(value = sum(value, na.rm = TRUE), .groups = "drop") |>
+  rename(total_stock = value)
+
+combined <- ev_stock |>
+  select(-parameter, -unit) |>
+  full_join(
+    charging_stations |> select(-parameter, -unit, -mode),
+    by = c("region_country", "category", "year", "Aggregate group")
+  ) |>
+  select(year, total_stock, charging_stations) |>
+  mutate(ev_per_station = total_stock / charging_stations)
+
+policy_by_year <- policy_data |>
+  rename(year = `Year announced`) |>
+  filter(!is.na(year)) |>
+  count(year)
+
+combined |>
+  mutate(
+    total_stock = scales::comma(total_stock),
+    charging_stations = scales::comma(charging_stations),
+    ev_per_station = round(ev_per_station, 2)
+  ) |>
+  knitr::kable(
+    col.names = c("Year", "Total EV Stock", "Charging Stations", "EVs per Station"),
+    align = c("c", "r", "r", "r")
+  )
+
+ggplot(combined, aes(x = year, y = ev_per_station)) +
+  geom_line() +
+  geom_point() +
+  geom_text(
+    aes(label = round(ev_per_station, 1)),
+    vjust = -1,
+    size = 3
+  ) +
+  scale_x_continuous(
+    breaks = seq(min(combined$year), max(combined$year), by = 1)
+  ) +
+  labs(
+    title = "EV Stock per Charging Station Over Time",
+    x = "Year",
+    y = "EVs per Charging Station"
+  ) +
+  theme_bw()
+
+ggplot(policy_by_year, aes(x = year, y = n)) +
+  geom_col() +
+  geom_text(
+    aes(label = n),
+    vjust = -0.5,
+    size = 3
+  ) +
+  scale_x_continuous(
+    breaks = seq(min(policy_by_year$year), max(policy_by_year$year), by = 1)
+  ) +
+  labs(
+    title = "Global EV Legislation by Year",
+    x = "Year",
+    y = "Number of Policies"
+  ) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
