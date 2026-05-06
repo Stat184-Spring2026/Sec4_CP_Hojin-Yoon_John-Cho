@@ -45,14 +45,19 @@ To reproduce the report:
 
 ```text
 project/
-├── data/                # Raw datasets used in analysis
-├── figures/             # Exported figures used in README/report
-├── sections/            # Individual section QMD files
-├── appendix/            # PCIP plans and GenAI documentation
-├── styles/              # Citation style files
-├── final-report.qmd     # Main combined Quarto report
-├── final-report.pdf     # Rendered final report
-└── README.md            # Project overview and documentation
+├── appendix/                 # PCIP plan, GenAI usage documentation, and contribution breakdown
+├── data/                     # Raw datasets used throughout the analysis
+├── figures/                  # Exported visualizations and images used in the README and report
+├── guidelines/               # Course project guidelines and reference materials
+├── sections/                 # Individual section QMD files for each contributor
+├── styles/                   # Citation style files used for report formatting
+├── .gitattributes            # Git configuration attributes
+├── .gitignore                # Files and folders ignored by Git
+├── .lintr                    # Linting configuration for R style checking
+├── EV-Adoption-Analysis.Rproj # RStudio project file
+├── README.md                 # Project overview and repository documentation
+├── final-report.pdf          # Rendered final project report
+└── final-report.qmd          # Main combined Quarto report source file
 ```
 
 ## Current Plan
