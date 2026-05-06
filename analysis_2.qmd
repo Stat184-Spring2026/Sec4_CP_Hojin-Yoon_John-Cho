@@ -1,0 +1,122 @@
+---
+title: "Global Electric Vehicle Adoption"
+date: "05/06/2026"
+format: pdf
+---
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+
+library(tidyverse)
+library(knitr)
+# Load your datasets
+ev_data <- read_csv("data/EVDataExplorer2025.xlsx - GEVO_EV_2025.csv")
+policy_data <- read_csv("data/Global EV Policy Explorer - Sheet1.csv")
+
+# Quick look
+colnames(ev_data)
+colnames(policy_data)
+
+unique(ev_data$parameter)
+unique(ev_data$mode)
+
+
+ev_data <- filter(ev_data, category == "Historical")
+
+global_ev_data <- filter(ev_data, region_country =="World")
+
+#separating out the charging stations data
+charging_stations <- filter(global_ev_data, parameter=="EV charging points") %>%
+  group_by(region_country, category, parameter, mode, year, unit, `Aggregate group`) %>%
+  summarise(value = sum(value), .groups = "drop") %>% 
+  rename(charging_stations = value)
+
+
+ev_stock <- filter(global_ev_data, parameter=="EV stock") %>%
+  group_by(region_country, category, parameter, year, unit, `Aggregate group`) %>%
+  summarise(value = sum(value), .groups = "drop") %>%
+  rename(total_stock = value)
+
+
+combined <- ev_stock %>%
+  select(-parameter, -unit) %>%
+  full_join(
+    charging_stations %>% select(-parameter, -unit, -mode),
+    by = c("region_country", "category", "year", "Aggregate group")
+  )
+
+combined <- combined %>%
+  select(year, total_stock, charging_stations) %>%
+  mutate(ev_per_station = total_stock/charging_stations)
+```
+
+
+\newpage
+## Data
+
+As shown in @ev-datatable, the combined dataset includes EV stock and charging station data over time. @fig-ev-ratio illustrates the ratio of EVs per charging station over time.
+
+```{r}
+#| label: ev-datatable
+#| echo: false
+
+combined %>%
+  kable(
+    caption = "EV Stock and Charging Stations Over Time",
+    col.names = c("year", "total_stock","charging_stations","ev_per_station"),
+    digits = 2
+  )
+```
+
+```{r}
+#| label: fig-ev-ratio
+#| fig-cap: "Ratio of EV Stock to Charging Stations Over Time"
+#| fig-alt: "A line graph showing the number of electric vehicles per charging station from 2010 onwards, with labeled data points at each year."
+#| fig-width: 7
+#| fig-height: 4
+#| echo: false
+
+ggplot(combined, aes(x = year, y = ev_per_station)) +
+  geom_line() +
+  geom_point() +
+  geom_text(aes(label = round(ev_per_station, 1)), vjust = -1) +
+  scale_x_continuous(breaks = seq(min(combined$year), max(combined$year), by = 1)) +
+  labs(
+    title = "EV Stock per Charging Station Over Time",
+    x = "Year",
+    y = "EVs per Charging Station"
+  ) +
+  theme_bw()
+```
+
+```{r}
+#| label: ev-policy-data
+#| echo: false
+
+policy_data %>%
+  rename(year = `Year announced`) %>%
+  filter(!is.na(year)) %>%
+  count(year) %>%
+  ggplot(aes(x = year, y = n)) +
+  geom_col(fill = "steelblue") +
+  geom_text(aes(label = n), vjust = -0.5) +
+  scale_x_continuous(breaks = seq(min(policy_data$`Year announced`, na.rm = TRUE), 
+                                  max(policy_data$`Year announced`, na.rm = TRUE), by = 1)) +
+  labs(
+    title = "Global EV Legislation by Year",
+    x = "Year",
+    y = "Number of Policies"
+  ) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+\newpage
+## Code Appendix
+
+```{r ref.label = knitr::all_labels()}
+#| echo: true
+#| eval: false
+```

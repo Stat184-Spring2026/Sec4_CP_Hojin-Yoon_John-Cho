@@ -164,4 +164,81 @@ ggplot() +
   theme_minimal()
 ```
 
+<<<<<<< HEAD:STAT184.qmd
 As shown in Figure @fig-ev-sales, global electric vehicle sales increased over time. The position of the points rises as the years increase, showing growth in EV adoption. The slope becomes steeper in the later years, which suggests that EV adoption accelerated instead of increasing at a constant rate. This may be connected to lower battery costs, more charging infrastructure, stronger government policies, and greater consumer interest in electric vehicles.
+=======
+As shown in @fig-ev-sales, global electric vehicle sales increased over time. The position of the points rises as the years increase, showing growth in EV adoption. The slope becomes steeper in the later years, which suggests that EV adoption accelerated instead of increasing at a constant rate. This may be connected to lower battery costs, more charging infrastructure, stronger government policies, and greater consumer interest in electric vehicles.
+
+# Conclusion
+
+Overall, the data shows that global electric vehicle adoption has grown strongly over time. EV sales show yearly growth, while EV stock shows the long-term buildup of electric vehicles on the road. Together, these trends suggest that electric vehicles are becoming a much larger part of global transportation.
+
+\newpage
+# Author Contributions
+
+Hojin Yoon led the EV adoption analysis, including the table on EV sales and EV stock and the line graph of EV sales over time. John Cho led the other section of the project. Both team members contributed to writing, editing, and reviewing the final report.
+
+# References
+
+International Energy Agency. (2025). *Global EV Data Explorer*. IEA.
+
+# Code Appendix
+
+```{r}
+#| echo: true
+#| eval: false
+
+# Primary author: Hojin Yoon
+# Reviewed by: John Cho
+# Style guide: tidyverse style guide
+
+library(tidyverse)
+library(readxl)
+library(knitr)
+library(scales)
+
+ev_data <- read_excel("EVDataExplorer2025.xlsx", sheet = "GEVO_EV_2025")
+
+person1_data <- ev_data |>
+  filter(
+    region_country == "World",
+    category == "Historical",
+    mode == "Cars",
+    parameter %in% c("EV sales", "EV stock"),
+    powertrain %in% c("BEV", "PHEV")
+  ) |>
+  group_by(year, parameter) |>
+  summarize(value = sum(value, na.rm = TRUE), .groups = "drop")
+
+person1_table <- person1_data |>
+  pivot_wider(
+    names_from = parameter,
+    values_from = value
+  ) |>
+  arrange(year) |>
+  rename(
+    Year = year,
+    `EV Sales` = `EV sales`,
+    `EV Stock` = `EV stock`
+  )
+
+kable(
+  person1_table,
+  col.names = c("Year", "EV Sales", "EV Stock"),
+  format.args = list(big.mark = ",")
+)
+
+person1_data |>
+  filter(parameter == "EV sales") |>
+  ggplot(aes(x = year, y = value)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 2) +
+  labs(
+    title = "Global Electric Vehicle Sales Over Time",
+    x = "Year",
+    y = "EV sales (vehicles)"
+  ) +
+  scale_y_continuous(labels = comma) +
+  theme_minimal()
+```
+>>>>>>> bd4e6a001212152e4fb27fcd584a1abeee3c4b8c:sections/hojin-section.qmd
