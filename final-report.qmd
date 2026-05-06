@@ -319,7 +319,7 @@ ggplot(combined, aes(x = year, y = ev_per_station)) +
   ) +
   theme_bw()
 ```
-
+\newpage
 @fig-ev-ratio shows how the number of EVs per charging station changed over time. This ratio is useful because EV adoption depends not only on how many electric vehicles are sold, but also on whether charging infrastructure expands enough to support them. If the ratio rises sharply, it may suggest that EV stock is growing faster than charging availability.
 
 ```{r}
