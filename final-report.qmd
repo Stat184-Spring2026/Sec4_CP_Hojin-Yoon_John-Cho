@@ -126,7 +126,7 @@ person1_table |>
   )
 ```
 
-Table @tbl-ev-adoption summarizes global EV sales and EV stock for cars over time. EV sales represent the number of new electric cars sold each year, while EV stock represents the total number of electric cars on the road. The table shows that EV adoption increased over time, especially in later years when both yearly sales and total stock became much larger.
+@tbl-ev-adoption summarizes global EV sales and EV stock for cars over time. EV sales represent the number of new electric cars sold each year, while EV stock represents the total number of electric cars on the road. The table shows that EV adoption increased over time, especially in later years when both yearly sales and total stock became much larger.
 
 ```{r}
 #| label: fig-ev-sales
@@ -206,7 +206,7 @@ ggplot() +
   theme_minimal()
 ```
 
-As shown in Figure @fig-ev-sales, global electric vehicle sales increased over time. The position of the points rises as the years increase, showing growth in EV adoption. The slope becomes steeper in the later years, which suggests that EV adoption accelerated instead of increasing at a constant rate. This may be connected to lower battery costs, more charging infrastructure, stronger government policies, and greater consumer interest in electric vehicles.
+As shown in @fig-ev-sales, global electric vehicle sales increased over time. The position of the points rises as the years increase, showing growth in EV adoption. The slope becomes steeper in the later years, which suggests that EV adoption accelerated instead of increasing at a constant rate. This may be connected to lower battery costs, more charging infrastructure, stronger government policies, and greater consumer interest in electric vehicles.
 
 \newpage
 # Charging Infrastructure and EV Policy Trends
