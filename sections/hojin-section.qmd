@@ -1,44 +1,23 @@
----
-title: "Global Electric Vehicle Adoption"
-author: "Hojin Yoon"
-date: "April 28 2026"
-
-format:
-  pdf:
-    toc: true
-    toc-depth: 2
-    number-sections: true
-    include-in-header:
-      text: |
-        \usepackage{caption}
-        \captionsetup[table]{position=bottom}
-    
-classoption: titlepage
-geometry: margin=1in
----
-
-\newpage
-
-# Introduction
-
-Electric vehicles are becoming an important part of the global transportation system. This section focuses on how global electric vehicle adoption has changed over time by analyzing EV sales and EV stock. EV sales show how many new electric cars were sold each year, while EV stock shows the total number of electric cars already on the road. Together, these variables help explain both short-term adoption and long-term growth in the electric vehicle industry.
-
-# Data Provenance
+## Data Provenance
 
 The data used in this analysis comes from the International Energy Agency Global EV Data Explorer. The dataset is stored in the file `EVDataExplorer2025.xlsx`. The data includes information about electric vehicle sales, stock, powertrain type, region, mode of transportation, category, and year. For this section, I focused on global historical data for cars and used the variables EV sales and EV stock. The data was collected and organized by the International Energy Agency to track electric vehicle trends across countries and regions.
 
-# FAIR and CARE Principles
+## FAIR and CARE Principles
 
 The IEA electric vehicle data mostly follows the FAIR principles because it is findable through the IEA website, accessible to the public, and provided in a structured format that can be read into statistical software. The data is also reusable because it includes clear variables such as year, region, powertrain, and value. However, the dataset may not fully satisfy every part of FAIR because users still need to interpret the column names and filter the data carefully.
 
 The CARE principles focus on collective benefit, authority to control, responsibility, and ethics. Since this dataset describes global electric vehicle trends rather than personal or community-level sensitive data, the CARE principles are less directly involved. However, the data can still support collective benefit by helping researchers understand clean transportation trends and policy impacts.
 
-# Data Preparation
+## Methods and Paradigms
+
+This section follows an Exploratory Data Analysis paradigm because it investigates patterns and trends in global electric vehicle adoption before making formal conclusions. The coding workflow uses the Tidyverse paradigm because its pipe-based syntax supports readable, organized, and reproducible data wrangling and visualization.
+
+## Data Preparation
 
 For this part of the project, I filtered the data to focus on global historical electric car data. I included battery electric vehicles and plug-in hybrid electric vehicles, then grouped the data by year and parameter. This allowed me to compare yearly EV sales and total EV stock over time.
 
 ```{r}
-#| label: setup
+#| label: setup-hojin
 #| include: false
 
 # Primary author: Hojin Yoon
@@ -51,8 +30,13 @@ library(knitr)
 library(scales)
 library(kableExtra)
 
-ev_data <- read_excel("EVDataExplorer2025.xlsx", sheet = "GEVO_EV_2025")
+# Import EV dataset
+ev_data <- read_excel(
+  "data/EVDataExplorer2025.xlsx",
+  sheet = "GEVO_EV_2025"
+)
 
+# Filter to global historical EV data for cars
 person1_data <- ev_data |>
   filter(
     region_country == "World",
@@ -61,9 +45,11 @@ person1_data <- ev_data |>
     parameter %in% c("EV sales", "EV stock"),
     powertrain %in% c("BEV", "PHEV")
   ) |>
+  # Aggregate yearly EV sales and EV stock values
   group_by(year, parameter) |>
   summarize(value = sum(value, na.rm = TRUE), .groups = "drop")
 
+# Reshape the data into a table format
 person1_table <- person1_data |>
   pivot_wider(
     names_from = parameter,
@@ -77,59 +63,39 @@ person1_table <- person1_data |>
   )
 ```
 
-\newpage
-# Results
+## Results
 
 ```{r}
 #| label: tbl-ev-adoption
+#| tbl-cap: "Summary of global EV sales and EV stock for cars over time."
+#| echo: false
 
 # Primary author: Hojin Yoon
 # Reviewed by: John Cho
 
-person1_table <- person1_data |>
-  pivot_wider(
-    names_from = parameter,
-    values_from = value
-  ) |>
-  arrange(year) |>
-  mutate(year = as.character(year)) |>
-  rename(
-    Year = year,
-    `EV Sales` = `EV sales`,
-    `EV Stock` = `EV stock`
-  )
+# Format EV sales and stock values with commas for readability
 person1_table |>
-  kable(
-    format = "latex",
-    booktabs = TRUE,
-    align = c("c", "r", "r"),
-    col.names = c("Year", "EV Sales", "EV Stock"),
-    format.args = list(big.mark = ",")
+  mutate(
+    `EV Sales` = scales::comma(`EV Sales`),
+    `EV Stock` = scales::comma(`EV Stock`)
   ) |>
-  kable_styling(
-    latex_options = "hold_position",
-    full_width = FALSE,
-    position = "center"
-  ) |>
-  column_spec(1, width = "1.5cm") |>
-  column_spec(2, width = "2.5cm") |>
-  column_spec(3, width = "2.5cm") |>
-  footnote(
-    general = "Global EV sales and EV stock for cars over time.",
-    footnote_as_chunk = TRUE
+  knitr::kable(
+    align = c("c", "r", "r")
   )
 ```
 
-\newpage
-@tbl-ev-adoption summarizes global EV sales and EV stock for cars over time. EV sales represent the number of new electric cars sold each year, while EV stock represents the total number of electric cars on the road. The table shows that EV adoption increased over time, especially in later years when both yearly sales and total stock became much larger.
+Table @tbl-ev-adoption summarizes global EV sales and EV stock for cars over time. EV sales represent the number of new electric cars sold each year, while EV stock represents the total number of electric cars on the road. The table shows that EV adoption increased over time, especially in later years when both yearly sales and total stock became much larger.
 
 ```{r}
 #| label: fig-ev-sales
 #| fig-cap: "Global electric vehicle sales for cars over time."
 #| fig-alt: "Line graph showing global electric vehicle sales by year. The line rises over time, with especially faster growth in the later years, showing that EV adoption increased rapidly."
+#| echo: false
 
 # Primary author: Hojin Yoon
 # Reviewed by: John Cho
+
+# Create historical EV sales dataset
 ev_sales_actual <- ev_data |>
   filter(
     region_country == "World",
@@ -141,6 +107,7 @@ ev_sales_actual <- ev_data |>
   group_by(year) |>
   summarize(value = sum(value, na.rm = TRUE), .groups = "drop")
 
+# Create projected EV sales dataset
 ev_sales_projection <- ev_data |>
   filter(
     region_country == "World",
@@ -154,11 +121,13 @@ ev_sales_projection <- ev_data |>
   filter(year > max(ev_sales_actual$year)) |>
   slice_min(year, n = 1)
 
+# Connect the final historical value to the first projected value
 projection_line <- bind_rows(
   ev_sales_actual |> filter(year == max(year)),
   ev_sales_projection
 )
 
+# Create EV sales visualization
 ggplot() +
   geom_line(
     data = ev_sales_actual,
@@ -170,7 +139,6 @@ ggplot() +
     aes(x = year, y = value),
     size = 2
   ) +
-
   geom_line(
     data = projection_line,
     aes(x = year, y = value),
@@ -178,14 +146,12 @@ ggplot() +
     linewidth = 1,
     linetype = "dashed"
   ) +
-
   geom_point(
     data = ev_sales_projection,
     aes(x = year, y = value),
     color = "red",
     size = 3
   ) +
-
   labs(
     title = "Global Electric Vehicle Sales Over Time",
     x = "Year",
@@ -198,6 +164,9 @@ ggplot() +
   theme_minimal()
 ```
 
+<<<<<<< HEAD:STAT184.qmd
+As shown in Figure @fig-ev-sales, global electric vehicle sales increased over time. The position of the points rises as the years increase, showing growth in EV adoption. The slope becomes steeper in the later years, which suggests that EV adoption accelerated instead of increasing at a constant rate. This may be connected to lower battery costs, more charging infrastructure, stronger government policies, and greater consumer interest in electric vehicles.
+=======
 As shown in @fig-ev-sales, global electric vehicle sales increased over time. The position of the points rises as the years increase, showing growth in EV adoption. The slope becomes steeper in the later years, which suggests that EV adoption accelerated instead of increasing at a constant rate. This may be connected to lower battery costs, more charging infrastructure, stronger government policies, and greater consumer interest in electric vehicles.
 
 # Conclusion
@@ -272,3 +241,4 @@ person1_data |>
   scale_y_continuous(labels = comma) +
   theme_minimal()
 ```
+>>>>>>> bd4e6a001212152e4fb27fcd584a1abeee3c4b8c:sections/hojin-section.qmd
